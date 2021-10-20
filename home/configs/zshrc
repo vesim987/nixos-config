@@ -1,0 +1,107 @@
+if [[ -r "${XDG_CACHE_HOME:-${HOME}/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-${HOME}/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# ZINIT
+if [[ ! -f "$HOME/.local/share/zinit/bin/zinit.zsh" ]]; then
+    print -P "%F{33}▓▒░ %F{220}Installing %F{33}DHARMA%F{220} Initiative Plugin Manager (%F{33}zdharma/zinit%F{220})…%f"
+    command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
+    command git clone https://github.com/zdharma/zinit "$HOME/.local/share/zinit/bin" && \
+        print -P "%F{33}▓▒░ %F{34}Installation successful.%f%b" || \
+        print -P "%F{160}▓▒░ The clone has failed.%f%b"
+fi
+
+source "$HOME/.local/share/zinit/bin/zinit.zsh"
+autoload -Uz _zinit
+(( ${+_comps} )) && _comps[zinit]=_zinit
+
+# Load a few important annexes, without Turbo
+# (this is currently required for annexes)
+zinit light-mode for \
+    zinit-zsh/z-a-as-monitor \
+    zinit-zsh/z-a-patch-dl
+
+## theme
+zinit ice from"gh"
+zinit ice depth=1; zinit light romkatv/powerlevel10k
+
+## autocompletion
+zinit ice wait"0" lucid blockf
+zinit light zsh-users/zsh-completions
+
+zinit ice wait"0" lucid blockf
+zinit snippet OMZ::plugins/ssh-agent/ssh-agent.plugin.zsh
+
+zinit ice wait"0" lucid blockf
+zinit snippet OMZ::lib/history.zsh
+
+zinit ice wait"0" lucid atload"_zsh_autosuggest_start"
+zinit light zsh-users/zsh-autosuggestions
+
+zinit ice wait"0" lucid atinit"zpcompinit; zpcdreplay"
+zinit light zdharma/fast-syntax-highlighting
+
+# others
+zinit ice wait"0" lucid blockf
+zinit snippet OMZ::plugins/archlinux/archlinux.plugin.zsh
+
+## git
+zinit ice wait"2" lucid as"program" pick"bin/git-dsf"
+zinit light zdharma/zsh-diff-so-fancy
+
+zinit ice wait"2" lucid as"program" pick"$ZPFX/bin/git-now" make"prefix=$ZPFX install"
+zinit light iwata/git-now
+
+zinit ice wait"2" lucid as"program" pick"$ZPFX/bin/git-alias" make"PREFIX=$ZPFX" nocompile
+zinit light tj/git-extras
+
+zinit ice wait"2" lucid as"program" atclone'perl Makefile.PL PREFIX=$ZPFX' atpull'%atclone' \
+            make'install' pick"$ZPFX/bin/git-cal"
+zinit light k4rthik/git-cal
+
+## fzf
+zinit ice lucid wait'0'
+zinit light joshskidmore/zsh-fzf-history-search
+
+# HISTORY
+zinit ice lucid
+zinit light zsh-users/zsh-history-substring-search
+
+#zle-line-init() {
+#    zle autosuggest_start
+#}
+#zle -N zle-line-init
+
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path ~/.cache/zsh/
+
+bindkey '\e[A' history-search-backward
+bindkey '\e[B' history-search-forward
+
+## History file configuration
+[ -z "$HISTFILE" ] && HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=10000
+
+## History command configuration
+setopt extended_history       # record timestamp of command in HISTFILE
+setopt hist_expire_dups_first # delete duplicates first when HISTFILE size exceeds HISTSIZE
+setopt hist_ignore_dups       # ignore duplicated commands history list
+setopt hist_ignore_space      # ignore commands that start with space
+setopt hist_verify            # show command with history expansion to user before running it
+setopt inc_append_history     # add commands to HISTFILE in order of execution
+setopt share_history          # share command history data
+
+# SHORTCUTS
+
+bindkey "^[[1;5D" backward-word # ctrl + arrow left
+bindkey "^[[1;5C" forward-word # ctrl + arrow right
+bindkey "^[[H" beginning-of-line # home
+bindkey "^[[F" end-of-line # end
+bindkey "^[[3~" delete-char # end
+
+autoload -U +X zpcompinit && zpcompinit
+# # complete -o nospace -C /usr/bin/vault vault
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

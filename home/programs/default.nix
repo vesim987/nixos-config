@@ -1,0 +1,16 @@
+[
+  ./bat.nix
+  ./command-not-found.nix
+  ./direnv.nix
+  ./exa.nix
+  ./foot.nix
+  ./fzf.nix
+  ./gdb.nix
+  ./git.nix
+  ./man.nix
+  ./mpv.nix
+  ./neovim.nix
+  ./ssh.nix
+  ./tmux.nix
+  ./zsh.nix
+]
