@@ -7,8 +7,6 @@
           orgAttrs.installPhase;
       }))
 
-      ungoogled-chromium
-
       zig
       zls
 

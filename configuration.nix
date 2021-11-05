@@ -1,7 +1,7 @@
 { config, pkgs, lib, ... }:
 let
   home-manager = builtins.fetchTarball
-    "https://github.com/nix-community/home-manager/archive/release-21.05.tar.gz";
+    "https://github.com/nix-community/home-manager/archive/master.tar.gz";
 in {
   imports = [
     ./hardware-configuration.nix
@@ -87,13 +87,21 @@ in {
     };
   };
 
+  services.resolved.extraConfig = ''
+    MulticastDNS=resolve
+  '';
+
+  virtualisation.docker = {
+    enable = true;
+  };
+
   i18n.defaultLocale = "en_US.UTF-8";
 
   users = {
     defaultUserShell = pkgs.zsh;
     users.vesim = {
       isNormalUser = true;
-      extraGroups = [ "wheel" "adbusers" ];
+      extraGroups = [ "wheel" "adbusers" "docker" ];
     };
   };
 
@@ -155,6 +163,8 @@ in {
       nix-index
       pciutils
 
+      docker-compose
+
       # networking stuff
       dnsutils
       inetutils
@@ -186,7 +196,6 @@ in {
           mypy
           numpy
           pep8
-          pyls-mypy
           requests
           scipy
           setuptools
@@ -217,10 +226,6 @@ in {
       # yubikey
       yubikey-manager
 
-      # TODO: remove me
-      #linuxPackages_latest.nvidia_x11
-      # linuxPackages_latest.bbswitch
-
       # gnu stuff
       gcc
       # pkgs.pkgsCross.aarch64-multiplatform.gcc
@@ -237,10 +242,15 @@ in {
     enableSSHSupport = true;
   };
 
+  services.avahi = {
+    enable = true;
+  };
+
   programs.light.enable = true;
   security.wrappers.light = {
     source = "${pkgs.light}/bin/light";
     owner = "root";
+    group = "root";
     setuid = true;
   };
 

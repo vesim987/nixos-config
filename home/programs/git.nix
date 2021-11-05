@@ -19,6 +19,8 @@
       "CMakeCache.txt"
       "CMakeFiles"
       ".gdb_history"
+      "zig-out"
+      "zig-cache"
     ];
   };
 }

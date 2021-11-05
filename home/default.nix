@@ -32,6 +32,25 @@
       };
 
       xdg = { enable = true; };
+
+      # TODO: create service for albert
+      xdg.configFile."albert/albert.conf".source = ./configs/albert.conf;
+      systemd.user.services.albert = {
+        Unit = {
+          Description = "Albert Launcher";
+          PartOf = "sway-session.target";
+          Requires = "sway-session.target";
+          After = "sway-session.target";
+        };
+
+        Service = {
+          Type = "simple";
+          ExecStart = "${pkgs.albert}/bin/albert";
+          Restart = "always";
+        };
+
+        Install = { WantedBy = [ "sway-session.target" ]; };
+      };
     };
   };
 }

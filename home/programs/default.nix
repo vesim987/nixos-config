@@ -1,6 +1,7 @@
 [
   ./bat.nix
   ./command-not-found.nix
+  ./chromium.nix
   ./direnv.nix
   ./exa.nix
   ./foot.nix
