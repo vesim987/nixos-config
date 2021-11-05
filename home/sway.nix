@@ -3,13 +3,13 @@ let
   terminal_wrapper = pkgs.writeShellScriptBin "sway-terminal" ''
     WINDOW_PID="$(${pkgs.sway}/bin/swaymsg -t get_tree | ${pkgs.jq}/bin/jq -e 'recurse(.nodes[]?) | select((.focused==true) and (.app_id=="foot")).pid')"
     if [ "a$?" = "a0" ]; then
-        SHELL_PID="$(${pkgs.procps}/bin/ps --no-headers --ppid "''${WINDOW_PID}" | ${pkgs.gawk}/bin/awk '{print $1}' | ${pkgs.coreutils}/bin/head -n 1)"
+        SHELL_PID="$(${pkgs.procps}/bin/ps --no-headers --ppid "''${WINDOW_PID}" | ${pkgs.gawk}/bin/awk '{print $1; exit}')"
         if [ "a$?" = "a0" ]; then
             WORKING_DIRECTORY="$(${pkgs.coreutils}/bin/readlink "/proc/''${SHELL_PID}/cwd")"
         fi
     fi
 
-    if [ "a$WORKING_DIRECTORY" = "a" ]; then
+    if [ "a''${WORKING_DIRECTORY}" = "a" ]; then
         WORKING_DIRECTORY="''${HOME}"
     fi
 
