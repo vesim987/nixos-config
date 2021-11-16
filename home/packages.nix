@@ -27,7 +27,7 @@
 
       # wine stuff
       wineWowPackages.staging
-      (winetricks.override { wine = wineWowPackages.staging; })
+      winetricks
 
       # lsp servers
       rnix-lsp

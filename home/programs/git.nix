@@ -9,6 +9,12 @@
         pager =
           "${pkgs.gitAndTools.diff-so-fancy}/bin/diff-so-fancy fancy | less --tabs=4 -RFX";
       };
+      merge = { tool = "vimdiff"; };
+      mergeTool = { keepBackup = false; };
+      "mergetool \"vimdiff\"" = {
+        cmd =
+          "${pkgs.neovim}/bin/nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'";
+      };
     };
     ignores = [
       "*.swp"

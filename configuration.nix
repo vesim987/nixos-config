@@ -1,7 +1,7 @@
 { config, pkgs, lib, ... }:
 let
   home-manager = builtins.fetchTarball
-    "https://github.com/nix-community/home-manager/archive/master.tar.gz";
+    "https://github.com/nix-community/home-manager/archive/release-21.05.tar.gz";
 in {
   imports = [
     ./hardware-configuration.nix
@@ -12,7 +12,7 @@ in {
   nixpkgs.overlays = [
     (import (builtins.fetchTarball {
       url =
-        "https://github.com/nix-community/neovim-nightly-overlay/archive/987450d4b0b6943d7fb20d5d798725d1d3988ebb.tar.gz";
+        "https://github.com/nix-community/neovim-nightly-overlay/archive/master.tar.gz";
     }))
     (self: super: {
       zig = super.zig.overrideAttrs (old: {
@@ -20,9 +20,9 @@ in {
         src = super.fetchFromGitHub {
           owner = "ziglang";
           repo = "zig";
-          rev = "cde3dd365e1fed806294eddc91700558d2135a64";
+          rev = "53523ef5d0413459bd2eb9d84d2338f2bc49d417";
           # TODO: create githuh actions for zig stuff
-          sha256 = "1qv9s2bv0r5pyc9cwlns8zyrycai7cdjcbx1nf76ddldr3v6hz6b";
+          sha256 = "1yxarfpcwb47fw54m7izfrfpisd0f80c2a0wmqcq6cb2wsh5psx9";
         };
         nativeBuildInputs = [ pkgs.cmake pkgs.llvmPackages_13.llvm.dev ];
         buildInputs = [ pkgs.libxml2 pkgs.zlib ]
@@ -33,9 +33,9 @@ in {
         src = super.fetchFromGitHub {
           owner = "zigtools";
           repo = "zls";
-          rev = "44fb88b85b2a5a6d74e9c40ac868f824c46c4174";
+          rev = "12cda9b0310605d170b932ebb6005e44e41f4ee1";
           # TODO: create githuh actions for zig stuff
-          sha256 = "0jhj7b0klbvlrrkigmm44dyxf5bgpcqhiin879psr1402w9wcml5";
+          sha256 = "156s1fv9lr1q8m75bjgqfpirahhfkib32sizrma3as0hqh7k8wzw";
           fetchSubmodules = true;
         };
       });
@@ -91,9 +91,7 @@ in {
     MulticastDNS=resolve
   '';
 
-  virtualisation.docker = {
-    enable = true;
-  };
+  virtualisation.docker = { enable = true; };
 
   i18n.defaultLocale = "en_US.UTF-8";
 
@@ -114,7 +112,6 @@ in {
       "spotify-unwrapped"
       "spotify"
       "unrar"
-      "nvidia-x11"
     ];
 
   fonts = {
@@ -144,8 +141,6 @@ in {
       source-serif-pro
     ];
   };
-
-  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.beta;
 
   environment.systemPackages = with pkgs;
     [
@@ -190,9 +185,7 @@ in {
           autopep8
           black
           flake8
-          ipykernel
           ipython
-          ipywidgets
           mypy
           numpy
           pep8
@@ -219,6 +212,12 @@ in {
       ninja
       cppcheck
 
+      # embedded
+      picocom
+      openocd
+      stm32flash
+      dfu-util
+
       unrar
 
       qemu_full
@@ -235,16 +234,25 @@ in {
       autoconf
     ] ++ (with llvmPackages_13; [ clang clang-unwrapped lld llvm ]);
 
-  hardware.bumblebee = { enable = true; };
+  hardware.bumblebee = {
+    enable = true;
+    driver = "nouveau";
+  };
 
   programs.gnupg.agent = {
     enable = true;
     enableSSHSupport = true;
   };
 
-  services.avahi = {
+  services.usbguard = {
     enable = true;
+    IPCAllowedUsers = [
+      "vesim"
+      "root"
+    ];
   };
+
+  services.avahi = { enable = true; };
 
   programs.light.enable = true;
   security.wrappers.light = {
@@ -316,6 +324,12 @@ in {
   programs.adb.enable = true;
 
   nix = {
+    binaryCaches =
+      [ "https://nix-community.cachix.org" "https://cache.nixos.org/" ];
+    binaryCachePublicKeys = [
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    ];
+
     allowedUsers = [ "@wheel" ];
 
     gc = {
