@@ -1,5 +1,5 @@
 { pkgs, ... }: {
-  home.packages = with pkgs; [ gdb11 ];
+  home.packages = with pkgs; [ gdb ];
 
   xdg.configFile."gdb/gdbinit".text = ''
     set disassembly-flavor intel

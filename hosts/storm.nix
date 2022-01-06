@@ -1,53 +1,12 @@
 { config, pkgs, lib, ... }:
 let
-  home-manager = builtins.fetchTarball
-    "https://github.com/nix-community/home-manager/archive/release-21.05.tar.gz";
+  sway_start = pkgs.writeShellScriptBin "sway-start" ''
+    source /etc/profile 
+    source /home/vesim/.nix-profile/etc/profile.d/hm-session-vars.sh
+    exec ${pkgs.dbus}/bin/dbus-run-session ${pkgs.sway}/bin/sway
+  '';
 in {
-  imports = [
-    ./hardware-configuration.nix
-    (import "${home-manager}/nixos")
-    ./home/default.nix
-  ];
-
-  nixpkgs.overlays = [
-    (import (builtins.fetchTarball {
-      url =
-        "https://github.com/nix-community/neovim-nightly-overlay/archive/master.tar.gz";
-    }))
-    (self: super: {
-      zig = super.zig.overrideAttrs (old: {
-        version = "0.9.0";
-        src = super.fetchFromGitHub {
-          owner = "ziglang";
-          repo = "zig";
-          rev = "53523ef5d0413459bd2eb9d84d2338f2bc49d417";
-          # TODO: create githuh actions for zig stuff
-          sha256 = "1yxarfpcwb47fw54m7izfrfpisd0f80c2a0wmqcq6cb2wsh5psx9";
-        };
-        nativeBuildInputs = [ pkgs.cmake pkgs.llvmPackages_13.llvm.dev ];
-        buildInputs = [ pkgs.libxml2 pkgs.zlib ]
-          ++ (with pkgs.llvmPackages_13; [ libclang lld llvm ]);
-        doCheck = false;
-      });
-      zls = super.zls.overrideAttrs (old: {
-        src = super.fetchFromGitHub {
-          owner = "zigtools";
-          repo = "zls";
-          rev = "12cda9b0310605d170b932ebb6005e44e41f4ee1";
-          # TODO: create githuh actions for zig stuff
-          sha256 = "156s1fv9lr1q8m75bjgqfpirahhfkib32sizrma3as0hqh7k8wzw";
-          fetchSubmodules = true;
-        };
-      });
-      gdb11 = super.gdb.overrideAttrs (old: {
-        version = "11.1";
-        src = super.fetchurl {
-          url = "mirror://gnu/gdb/gdb-11.1.tar.xz";
-          sha256 = "151z6d0265hv9cgx9zqqa4bd6vbp20hrljhd6bxl7lr0gd0crkyc";
-        };
-      });
-    })
-  ];
+  imports = [ ./hardware-configuration.nix ];
 
   # move to hardware-configuration.nix
   boot.loader.systemd-boot.enable = true;
@@ -57,6 +16,9 @@ in {
   hardware.sensor.iio.enable = true;
   hardware.cpu.intel.updateMicrocode = true;
   hardware.enableRedistributableFirmware = true;
+
+  hardware.logitech.wireless.enable = true;
+  hardware.logitech.wireless.enableGraphical = true;
 
   time.timeZone = "Europe/Warsaw";
 
@@ -86,12 +48,28 @@ in {
       routes = [{ routeConfig = { Metric = 1000; }; }];
     };
   };
+  programs.dconf.enable = true;
+  #services.dbus.packages = with pkgs; [ gnome3.dconf ];
 
   services.resolved.extraConfig = ''
     MulticastDNS=resolve
   '';
 
-  virtualisation.docker = { enable = true; };
+  networking.extraHosts = ''
+    10.0.0.10 jellyfin.htpc.ves.im
+    10.0.0.10 sonarr.htpc.ves.im
+    10.0.0.10 qbittorrent.htpc.ves.im
+    10.0.0.10 radarr.htpc.ves.im
+    10.0.0.10 ombi.htpc.ves.im
+  '';
+
+  virtualisation = {
+    waydroid.enable = true;
+    docker.enable = true;
+    lxc.enable = true;
+    lxd.enable = true;
+    # libvirtd = { enable = true; };
+  };
 
   i18n.defaultLocale = "en_US.UTF-8";
 
@@ -159,6 +137,8 @@ in {
       pciutils
 
       docker-compose
+      lxc
+      lxd
 
       # networking stuff
       dnsutils
@@ -176,9 +156,6 @@ in {
       vulkan-loader
       mesa-demos
 
-      libva
-      intel-media-driver
-
       # TODO: dont use python39Full
       (python3.withPackages (p:
         with p; [
@@ -195,7 +172,7 @@ in {
           virtualenv
 
           pulsectl
-          pwntools
+          #pwntools
 
           i3ipc
           appdirs
@@ -203,11 +180,11 @@ in {
 
       # security tools
       #python3.pkgs.pwntools
-      pwndbg
+      #pwndbg
 
       # dev stuff
       cmake
-      gdb11
+      gdb
       meson
       ninja
       cppcheck
@@ -220,8 +197,6 @@ in {
 
       unrar
 
-      qemu_full
-
       # yubikey
       yubikey-manager
 
@@ -232,7 +207,36 @@ in {
       gnumake
       automake
       autoconf
-    ] ++ (with llvmPackages_13; [ clang clang-unwrapped lld llvm ]);
+
+      # ???
+      polkit
+      polkit_gnome
+    ] ++ (with llvmPackages_13; [ clang-unwrapped lld llvm ]);
+
+  # TODO: make this working
+  systemd.services.sway = {
+    wantedBy = [ "graphical.target" ];
+    after = [ "systemd-user-sessions.service" ];
+    #aliases = ["display-manager.service"];
+    description = "Start sway";
+    serviceConfig = {
+      Type = "simple";
+      User = "vesim";
+      WorkingDirectory = "/home/vesim";
+      TTYPath = "/dev/tty1";
+      TTYReset = "yes";
+      TTYVHangup = "yes";
+      TTYVTDisallocate = "yes";
+      PAMName = "login";
+      StandardInput = "tty";
+      StandardError = "journal";
+      StandardOutput = "journal";
+      ExecStart = "${sway_start}/bin/sway-start";
+      Restart = "on-failure";
+      RestartSec = 1;
+      TimeoutStopSec = 10;
+    };
+  };
 
   hardware.bumblebee = {
     enable = true;
@@ -246,10 +250,19 @@ in {
 
   services.usbguard = {
     enable = true;
-    IPCAllowedUsers = [
-      "vesim"
-      "root"
-    ];
+    IPCAllowedUsers = [ "vesim" "root" ];
+  };
+  systemd.services.usbguard-dbus = {
+    enable = true;
+    description = "USBGuard D-Bus Service";
+    requires = [ "usbguard.service" ];
+    serviceConfig = {
+      Type = "dbus";
+      BusName = "org.usbguard1";
+      ExecStart = "${pkgs.usbguard}/bin/usbguard-dbus";
+    };
+    wantedBy = [ "multi-user.target" ];
+    aliases = [ "dbus-org.usbguard.service" ];
   };
 
   services.avahi = { enable = true; };
@@ -258,8 +271,8 @@ in {
   security.wrappers.light = {
     source = "${pkgs.light}/bin/light";
     owner = "root";
-    group = "root";
-    setuid = true;
+    group = "video";
+    setgid = true;
   };
 
   # enable pipewire as sound server
@@ -269,6 +282,7 @@ in {
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+    jack.enable = true;
   };
   # disable pulseaudio which is enabled by sound.enable
   hardware.pulseaudio.enable = false;
@@ -278,7 +292,16 @@ in {
     hsphfpd.enable = true;
   };
 
-  hardware.opengl.enable = true;
+  systemd.services.bluetooth.serviceConfig.ExecStart = [
+    ""
+    "${pkgs.bluez}/libexec/bluetooth/bluetoothd -f /etc/bluetooth/main.conf --experimental"
+  ];
+
+  hardware.opengl = {
+    enable = true;
+    driSupport32Bit = true;
+    extraPackages = with pkgs; [ intel-media-driver vaapiVdpau libvdpau-va-gl ];
+  };
 
   xdg = {
     portal = {
@@ -313,11 +336,11 @@ in {
   services.udev.extraRules = ''
     # for some reasons setting the env below doesn't work
     SUBSYSTEMS=="usb", ENV{ID_USB_INTERFACE_NUM}="$attr{bInterfaceNumber}"
-    SUBSYSTEMS=="usb", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="6018", GROUP="plugdev", MODE="0666"
+    SUBSYSTEMS=="usb", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="6018", GROUP="plugdev", MODE="0666", ENV{ID_USB_VENDOR}="$attr{idProduct}"
 
     # ATTR{bInterfaceNumber} is not available in tty subsystem so the ENV hack is required
-    SUBSYSTEM=="tty", ATTRS{serial}=="E2C5ACC0", ENV{ID_USB_INTERFACE_NUM}=="00", SYMLINK+="ttyGdb"
-    SUBSYSTEM=="tty", ATTRS{serial}=="E2C5ACC0", ENV{ID_USB_INTERFACE_NUM}=="02", SYMLINK+="ttySerial"
+    SUBSYSTEM=="tty", ENV{ID_USB_VENDOR}=="1d50", ENV{ID_USB_INTERFACE_NUM}=="00", SYMLINK+="ttyGdb"
+    SUBSYSTEM=="tty", ENV{ID_USB_VENDOR}=="1d50", ENV{ID_USB_INTERFACE_NUM}=="02", SYMLINK+="ttySerial"
   '';
 
   services.sshd.enable = true; # TODO: remove
@@ -332,13 +355,18 @@ in {
 
     allowedUsers = [ "@wheel" ];
 
+    extraOptions = ''
+      experimental-features = nix-command flakes
+    '';
+
     gc = {
       automatic = true;
       dates = "weekly";
     };
+
     optimise = {
       automatic = true;
-      dates = [ "07:00" "13:00" "22:00" ];
+      dates = [ "07:00" "22:00" ];
     };
   };
 

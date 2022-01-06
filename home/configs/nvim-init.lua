@@ -30,12 +30,18 @@ require("packer").startup(function()
     use {
         "neovim/nvim-lspconfig",
         ft = {"zig", "c", "cpp", "python", "nix", "javascript"},
-        requires = {"ray-x/lsp_signature.nvim"},
+        requires = {"ray-x/lsp_signature.nvim", "tami5/lspsaga.nvim"},
         config = function()
             local lsp = require("lspconfig")
+            local saga = require("lspsaga")
 
             function on_attach()
                 require"lsp_signature".on_attach()
+                saga.init_lsp_saga({
+                  code_action_prompt = {
+                    enable = false,
+                  },
+                })
                 -- require'completion'.on_attach()
             end
 
@@ -220,48 +226,48 @@ require("packer").startup(function()
         config = function()
             require("bufferline").setup {
                 options = {
-                    custom_areas = {
-                        right = function()
-                            local result = {}
-                            local error =
-                                vim.lsp.diagnostic.get_count(0, [[Error]])
-                            local warning =
-                                vim.lsp.diagnostic.get_count(0, [[Warning]])
-                            local info =
-                                vim.lsp.diagnostic.get_count(0, [[Information]])
-                            local hint =
-                                vim.lsp.diagnostic.get_count(0, [[Hint]])
+                    -- custom_areas = {
+                    --     right = function()
+                    --         local result = {}
+                    --         local error =
+                    --             vim.lsp.diagnostic.get_count(0, [[Error]])
+                    --         local warning =
+                    --             vim.lsp.diagnostic.get_count(0, [[Warning]])
+                    --         local info =
+                    --             vim.lsp.diagnostic.get_count(0, [[Information]])
+                    --         local hint =
+                    --             vim.lsp.diagnostic.get_count(0, [[Hint]])
 
-                            if error ~= 0 then
-                                result[1] = {
-                                    text = "  " .. error,
-                                    guifg = "#EC5241"
-                                }
-                            end
+                    --         if error ~= 0 then
+                    --             result[1] = {
+                    --                 text = "  " .. error,
+                    --                 guifg = "#EC5241"
+                    --             }
+                    --         end
 
-                            if warning ~= 0 then
-                                result[2] = {
-                                    text = "  " .. warning,
-                                    guifg = "#EFB839"
-                                }
-                            end
+                    --         if warning ~= 0 then
+                    --             result[2] = {
+                    --                 text = "  " .. warning,
+                    --                 guifg = "#EFB839"
+                    --             }
+                    --         end
 
-                            if hint ~= 0 then
-                                result[3] = {
-                                    text = "  " .. hint,
-                                    guifg = "#A3BA5E"
-                                }
-                            end
+                    --         if hint ~= 0 then
+                    --             result[3] = {
+                    --                 text = "  " .. hint,
+                    --                 guifg = "#A3BA5E"
+                    --             }
+                    --         end
 
-                            if info ~= 0 then
-                                result[4] = {
-                                    text = "  " .. info,
-                                    guifg = "#7EA9A7"
-                                }
-                            end
-                            return result
-                        end
-                    }
+                    --         if info ~= 0 then
+                    --             result[4] = {
+                    --                 text = "  " .. info,
+                    --                 guifg = "#7EA9A7"
+                    --             }
+                    --         end
+                    --         return result
+                    --     end
+                    -- }
                 }
             }
         end

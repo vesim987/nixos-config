@@ -11,27 +11,32 @@ let
       };
       inherit version;
     };
-  createChromiumExtension = createChromiumExtensionFor
-    (lib.versions.major pkgs.ungoogled-chromium.version);
+  createChromiumExtension =
+    createChromiumExtensionFor (lib.versions.major pkgs.chromium.version);
 in {
   programs.chromium = {
     enable = true;
-    package = pkgs.ungoogled-chromium;
+    package = (pkgs.chromium.override {
+      #commandLineArgs = [
+      #  "--enable-features=UseOzonePlatform"
+      #  "--ozone-platform=wayland"
+      #];
+    });
 
-    extensions = [
-      (createChromiumExtension {
-        # ublock origin
-        id = "cjpalhdlnbpafiamejdnhcphjbkeiagm";
-        sha256 = "sha256:12ps948lg91bbjxjmwb3d8590q8rf4mv7bkhzrjnnd210gbl5wxn";
-        version = "1.38.6";
-      })
-      (createChromiumExtension {
-        # enpass
-        id = "kmcfomidfpdkfieipokbalgegidffkal";
-        sha256 = "sha256:1gf1ycjqgky5z5x3jlhjkdhyylnxrwal1yqwln5mr0gznks37j7d";
-        version = "6.6.2";
-      })
-    ];
+    #extensions = [
+    #  (createChromiumExtension {
+    #    # ublock origin
+    #    id = "cjpalhdlnbpafiamejdnhcphjbkeiagm";
+    #    sha256 = "sha256:0w9hp8dx4l4lyy4wfl1s8wif3s1kvz88wlvkh8g68y7hkqgpk3i6";
+    #    version = "1.38.6";
+    #  })
+    #  (createChromiumExtension {
+    #    # enpass
+    #    id = "kmcfomidfpdkfieipokbalgegidffkal";
+    #    sha256 = "sha256:1jc66j6sbpbrbaf7f8plzqrqdgds23rdjky9cz62cx1mnrhdsqdb";
+    #    version = "6.6.2";
+    #  })
+    #];
   };
 
 }

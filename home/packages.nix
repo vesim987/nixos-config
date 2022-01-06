@@ -23,7 +23,6 @@
       xdg-utils
 
       ripgrep
-      gdb11
 
       # wine stuff
       wineWowPackages.staging
@@ -35,8 +34,9 @@
       sumneko-lua-language-server
       nodePackages.pyright # thats hurts
 
-      ghidra-bin
+      #ghidra-bin
       ffmpeg
+      sc-im
 
     ] ++ (with sway-contrib; [
       slurp
